@@ -4,13 +4,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Função para parse dos segmentos EDIFACT
-def parse_segments(segments_list):
+def parse_orders_edi_file(segments_list):
     parsed_data = {}
     current_transaction = None
     current_group = None
 
     for segment in segments_list:
-        sub_segments = segment.split("+")
+        sub_segments = segment.strip().split("+")
         segment_name = sub_segments[0]
 
         try:
@@ -138,41 +138,52 @@ def parse_unb_segment(parts):
         raise ValueError("Segmento UNB incompleto")
 
     unb_dict = {
-        "SyntaxIdentifier_1": parts[1] if len(parts) > 1 else "",
-        "SyntaxVersionNumber_2": parts[2] if len(parts) > 2 else "",
+        "SyntaxIdentifier": parts[1].strip() if len(parts) > 1 else "",
+        "SyntaxVersionNumber": parts[2].strip() if len(parts) > 2 else "",
+        "SenderIdentification": parts[3].strip() if len(parts) > 3 else "",
+        "RecipientIdentification": parts[4].strip() if len(parts) > 4 else "",
+        "DateAndTimePreparation": parts[5].strip() if len(parts) > 5 else "",
+        "InterchangeControlReference": parts[6].strip() if len(parts) > 6 else "",
+        "ApplicationReference": parts[7].strip() if len(parts) > 7 else "",
+        "ProcessingPriorityCode": parts[8].strip() if len(parts) > 8 else "",
+        "AcknowledgementRequest": parts[9].strip() if len(parts) > 9 else "",
+        "CommunicationAgreement": parts[10].strip() if len(parts) > 10 else "",
+        "TestIndicator": parts[11].strip().rstrip("'") if len(parts) > 11 else ""
     }
-
-    for index in range(3, len(parts)):
-        key = f"Element_{index-1:02d}"  # Constrói chaves dinâmicas para os elementos restantes
-        unb_dict[key] = parts[index]
 
     return unb_dict
 
+
 # Função para parse do segmento UNH
 def parse_unh_segment(parts):
-    required_length = 3  # Número mínimo de elementos obrigatórios no segmento UNH
+    if not parts:
+        raise ValueError("Segmento UNH vazio")
 
-    if len(parts) < required_length:
+    if len(parts) < 2:
         raise ValueError("Segmento UNH incompleto")
 
-    # Ajustar para lidar com os elementos dinamicamente, se houver mais que 3 elementos
+    message_reference = parts[1]
+    message_type_version = parts[2] if len(parts) > 2 else ""
+
     unh_dict = {
-        "MessageReferenceNumber_01": parts[1] if len(parts) > 1 else "",
-        "MessageType_02": parts[2].split(":")[0] if len(parts) > 2 else "",
-        "MessageVersionNumber_03": parts[3] if len(parts) > 3 else ""
+        "MessageReferenceNumber_01": message_reference,
+        "MessageType_02": "",
+        "MessageVersionNumber_03": ""
     }
 
-    # Adicionar informações adicionais se existirem
-    for index in range(4, len(parts)):
-        key = f"AdditionalInformation_{index - 3:02d}"  # Nomeia as chaves dinamicamente
-        unh_dict[key] = parts[index]
+    if message_type_version:
+        type_version_parts = message_type_version.split(":")
+        if len(type_version_parts) > 0:
+            unh_dict["MessageType_02"] = type_version_parts[0]
+        if len(type_version_parts) > 1:
+            # Concatena os elementos restantes, removendo '\r' se presente
+            version_number = ":".join(type_version_parts[1:]).rstrip("'\r")
+            unh_dict["MessageVersionNumber_03"] = version_number
 
     return unh_dict
 
 
 # Função para parse do segmento BGM
-
-# Função para parse do segmento BGM (exemplo)
 def parse_bgm_segment(parts):
     required_length = 3  # Número mínimo de elementos obrigatórios no segmento BGM
 
@@ -180,12 +191,67 @@ def parse_bgm_segment(parts):
         raise ValueError("Segmento BGM incompleto")
 
     bgm_dict = {
-        "DocumentMessageName_01": parts[1] if len(parts) > 1 else "",
-        "DocumentMessageNumber_02": parts[2] if len(parts) > 2 else ""
-        # Adicionar mais campos conforme necessário
+        "DocumentMessageName_01": parts[1],
+        "DocumentMessageNumber_02": parts[2],
+        "MessageFunction_03": parts[3].rstrip("'\r") if len(parts) > 3 else ""
     }
 
     return bgm_dict
+
+def parse_dtm_segment(parts):
+    if not parts:
+        return {}  # Retorna um dicionário vazio se não houver partes para processar
+    
+    dtm_dict = {
+        "DateTimePeriodQualifier_01": "",
+        "DateTimePeriod_02": "",
+        "DateTimePeriodFormatQualifier_03": ""
+    }
+    
+    if parts and len(parts) > 1:
+        dtm_parts = parts[1].split(":")
+        dtm_dict["DateTimePeriodQualifier_01"] = dtm_parts[0] if len(dtm_parts) > 0 else ""
+        dtm_dict["DateTimePeriod_02"] = dtm_parts[1] if len(dtm_parts) > 1 else ""
+        
+        if len(dtm_parts) > 2:
+            dtm_dict["DateTimePeriodFormatQualifier_03"] = dtm_parts[2].rstrip("'\r")
+        else:
+            dtm_dict["DateTimePeriodFormatQualifier_03"] = ""
+
+    return dtm_dict
+
+# Função para parse do segmento PAI
+def parse_pai_segment(parts):
+    if not parts or len(parts) < 2:
+        return {}  # Retorna um dicionário vazio se não houver partes suficientes para processar
+    
+    pai_dict = {
+        "PaymentTermsTypeCode_01": "",
+        "PaymentTermsBasisCode_02": ""
+    }
+    
+    # Primeira parte, trata o PaymentTermsTypeCode_01
+    if parts[1]:
+        if "::" in parts[1]:
+            pai_dict["PaymentTermsTypeCode_01"] = parts[1].split("::")[0]
+            pai_dict["PaymentTermsBasisCode_02"] = parts[1].split("::")[1].rstrip("'\r")
+        else:
+            pai_dict["PaymentTermsTypeCode_01"] = parts[1].rstrip("'\r")
+    
+    return pai_dict
+
+# Função para parse do segmento FTX
+def parse_ftx_segment(parts):
+    if not parts:
+        return {}  # Retorna um dicionário vazio se não houver partes para processar
+    
+    ftx_dict = {
+        "FreeTextTypeCode_01": parts[1] if len(parts) > 1 else "",
+        "FreeTextQualifier_02": parts[2] if len(parts) > 2 else "",
+        "FreeTextQualifier_03": parts[3].rstrip("'\r") if len(parts) > 3 else ""
+    }
+    
+    return ftx_dict
 
 
 # Função para parse do segmento UNT
@@ -212,44 +278,6 @@ def parse_unz_segment(parts):
         "InterchangeControlReference_02": parts[2] if len(parts) > 2 else ""
     }
 
-# Função para parse do segmento DTM
-def parse_dtm_segment(parts):
-    qualifier = parts[1] if len(parts) > 1 else ""
-    date = parts[2] if len(parts) > 2 else ""
-    time = parts[3] if len(parts) > 3 else ""
-
-    return {
-        "DateTimePeriodQualifier_01": qualifier,
-        "DateTimePeriod_02": date,
-        "DateTimePeriodFormatQualifier_03": time
-    }
-
-# Função para parse do segmento PAI
-def parse_pai_segment(parts):
-    required_length = 2  # Número mínimo de elementos obrigatórios no segmento PAI
-
-    if len(parts) < required_length:
-        raise ValueError("Segmento PAI incompleto")
-
-    return {
-        "PaymentTermsTypeCode_01": parts[1] if len(parts) > 1 else "",
-        "PaymentTermsBasisCode_02": parts[2] if len(parts) > 2 else ""
-    }
-
-# Função para parse do segmento FTX
-def parse_ftx_segment(parts):
-    required_length = 5  # Número mínimo de elementos obrigatórios no segmento FTX
-
-    if len(parts) < required_length:
-        raise ValueError("Segmento FTX incompleto")
-
-    return {
-        "TextSubjectCodeQualifier_01": parts[1] if len(parts) > 1 else "",
-        "TextLiteral_02": parts[2] if len(parts) > 2 else "",
-        "TextLiteral_03": parts[3] if len(parts) > 3 else "",
-        "TextLiteral_04": parts[4] if len(parts) > 4 else ""
-    }
-
 # Função para parse do segmento RFF
 def parse_rff_segment(parts):
     required_length = 2  # Número mínimo de elementos obrigatórios no segmento RFF
@@ -264,15 +292,23 @@ def parse_rff_segment(parts):
 
 # Função para parse do segmento NAD
 def parse_nad_segment(parts):
-    required_length = 2  # Número mínimo de elementos obrigatórios no segmento NAD
+    if not parts or len(parts) < 3:
+        return {"PartyQualifier": "", "PartyIdentification": ""}
 
-    if len(parts) < required_length:
-        raise ValueError("Segmento NAD incompleto")
+    party_qualifier = parts[1] if len(parts) > 1 else ""
+    party_info = parts[2].rstrip("'\r") if len(parts) > 2 else ""
+
+    if "::" in party_info:
+        party_parts = party_info.split("::")
+        party_identification = party_parts[0]
+    else:
+        party_identification = party_info
 
     return {
-        "PartyFunctionCodeQualifier_01": parts[1] if len(parts) > 1 else "",
-        "PartyIdentifier_02": parts[2] if len(parts) > 2 else ""
+        "PartyQualifier": party_qualifier,
+        "PartyIdentification": party_identification
     }
+
 
 # Função para parse do segmento CTA
 def parse_cta_segment(parts):
@@ -298,7 +334,6 @@ def parse_com_segment(parts):
 
 
 # Função para parse do segmento CUX
-# Função para parse do segmento CUX
 def parse_cux_segment(parts):
     cux_dict = {}
 
@@ -323,11 +358,7 @@ def parse_tdt_segment(parts):
 
 # Função para parse do segmento TOD
 def parse_tod_segment(parts):
-    required_length = 2  # Número mínimo de elementos obrigatórios no segmento TOD
-
-    if len(parts) < required_length:
-        raise ValueError("Segmento TOD incompleto")
-
+    if not parts: return{}
     return {
         "DeliveryOrTransportTermsFunctionCode_01": parts[1] if len(parts) > 1 else "",
         "TermsOfDeliveryOrTransport_02": parts[2] if len(parts) > 2 else ""
@@ -345,19 +376,19 @@ def parse_loc_segment(parts):
         "LocationIdentifier_02": parts[2] if len(parts) > 2 else "",
         "LocationName_03": parts[3] if len(parts) > 3 else ""
     }
-
 # Função para parse do segmento LIN
 def parse_lin_segment(parts):
-    required_length = 3  # Número mínimo de elementos obrigatórios no segmento LIN
-
-    if len(parts) < required_length:
+    if len(parts) < 4:
         raise ValueError("Segmento LIN incompleto")
 
-    return {
-        "LineItemIdentifier_01": parts[1] if len(parts) > 1 else "",
-        "ActionRequestNotificationCode_02": parts[2] if len(parts) > 2 else "",
-        "ProductIdentifier_03": parts[3] if len(parts) > 3 else ""
+    lin_dict = {
+        "LineItemIdentifier_01": parts[1].strip() if len(parts) > 1 else "",
+        "ActionRequestNotificationCode_02": parts[2].strip() if len(parts) > 2 else "",
+        "ProductIdentifier_03": parts[3].split(":")[0].strip() if len(parts) > 3 else "",
+        "ItemDescriptionIdentification_04": parts[3].split(":")[1].strip() if len(parts) > 3 and len(parts[3].split(":")) > 1 else ""
     }
+
+    return lin_dict
 
 # Função para parse do segmento PIA
 def parse_pia_segment(parts):
@@ -374,16 +405,12 @@ def parse_pia_segment(parts):
 
 # Função para parse do segmento IMD
 def parse_imd_segment(parts):
-    required_length = 3  # Número mínimo de elementos obrigatórios no segmento IMD
-
-    if len(parts) < required_length:
-        raise ValueError("Segmento IMD incompleto")
-
-    return {
-        "ItemDescriptionTypeCode_01": parts[1] if len(parts) > 1 else "",
-        "ItemCharacteristicCode_02": parts[2] if len(parts) > 2 else "",
-        "ItemDescription_03": parts[3] if len(parts) > 3 else ""
-    }
+        if not parts: return{}
+        return {
+           "ItemDescriptionTypeCode_01": parts[1] if len(parts) > 1 else "",
+           "ItemCharacteristicCode_02": parts[2] if len(parts) > 2 else "",
+           "ItemDescription_03": parts[3] if len(parts) > 3 else ""
+       }
 
 # Função para parse do segmento QTY
 def parse_qty_segment(parts):
@@ -400,62 +427,80 @@ def parse_qty_segment(parts):
 
 # Função para parse do segmento MOA
 def parse_moa_segment(parts):
-    required_length = 2  # Número mínimo de elementos obrigatórios no segmento MOA
-
-    if len(parts) < required_length:
-        raise ValueError("Segmento MOA incompleto")
-
-    return {
-        "MonetaryAmountTypeCodeQualifier_01": parts[1] if len(parts) > 1 else "",
-        "MonetaryAmount_02": parts[2] if len(parts) > 2 else "",
-        "CurrencyIdentificationCode_03": parts[3] if len(parts) > 3 else ""
+    if not parts:
+        return {}  # Retorna um dicionário vazio se não houver partes para processar
+    moa_dict = {
+        "MonetaryAmountTypeQualifier_01": parts[1].split(":")[0] if len(parts) > 1 else "",
+        "MonetaryAmount_02": parts[2] if len(parts) > 2 else ""
+        # Adicionar mais campos conforme necessário
     }
 
-# Função para parse do segmento PRI
+    return moa_dict
+
 # Função para parse do segmento PRI
 def parse_pri_segment(parts):
-    pri_dict = {}
+    if not parts:
+        return {}  # Retorna um dicionário vazio se não houver partes para processar
+    
+    pri_dict = {
+        "PriceCodeQualifier_01": parts[1].split(":")[0] if len(parts) > 1 else "",
+        "PriceAmount_02": parts[1].split(":")[1] if len(parts) > 1 and len(parts[1].split(":")) > 1 else "",
+        "PriceTypeQualifier_03": parts[1].split(":")[2] if len(parts) > 1 and len(parts[1].split(":")) > 2 else "",
+        "UnitPriceBasis_04": parts[1].split(":")[3] if len(parts) > 1 and len(parts[1].split(":")) > 3 else "",
+        "MeasureUnitQualifier_05": parts[1].split(":")[4] if len(parts) > 1 and len(parts[1].split(":")) > 4 else ""
+    }
 
-    # Iterar sobre os elementos do segmento PRI
-    for index, part in enumerate(parts[1:], start=1):
-        if index == 1:
-            pri_dict["PriceCodeQualifier_01"] = part
-        elif index == 2:
-            pri_dict["PriceAmount_02"] = part
-        elif index == 3:
-            pri_dict["CurrencyIdentificationCode_03"] = part
-        else:
-            pri_dict[f"AdditionalInfo_{index:02d}"] = part
+    # Adicionar mais campos conforme necessário
+    for index in range(2, len(parts)):
+        key = f"AdditionalInfo_{index - 1:02d}"  # Nomeia as chaves dinamicamente
+        pri_dict[key] = parts[index]
 
     return pri_dict
 
+
 # Função para parse do segmento TAX
 def parse_tax_segment(parts):
-    required_length = 4  # Número mínimo de elementos obrigatórios no segmento TAX
-
-    if len(parts) < required_length:
-        raise ValueError("Segmento TAX incompleto")
-
-    return {
-        "DutyOrTaxOrFeeTypeCode_01": parts[1] if len(parts) > 1 else "",
-        "DutyOrTaxOrFeeRate_02": parts[2] if len(parts) > 2 else "",
-        "DutyOrTaxOrFeeRateBasisCode_03": parts[3] if len(parts) > 3 else "",
-        "DutyOrTaxOrFeeCategoryCode_04": parts[4] if len(parts) > 4 else ""
+    if not parts:
+        return {}  # Retorna um dicionário vazio se não houver partes para processar
+    
+    tax_dict = {
+        "DutyOrTaxOrFeeTypeCode_01": parts[1].strip() if len(parts) > 1 else "",
+        "DutyOrTaxOrFeeRate_02": parts[2].strip() if len(parts) > 2 else "",
+        "DutyOrTaxOrFeeRateBasisCode_03": parts[3].strip() if len(parts) > 3 else "",
+        "DutyOrTaxOrFeeCategoryCode_04": parts[4].strip().split(":")[0] if len(parts) > 4 else ""
     }
+
+    # Adicionar mais campos conforme necessário
+    for index in range(5, len(parts)):
+        if parts[index].strip().startswith(":::"):
+            tax_dict["DutyOrTaxOrFeeCategoryCode_04"] += parts[index].strip()
+        else:
+            key = f"AdditionalInfo_{index - 4:02d}"  # Nomeia as chaves dinamicamente
+            tax_dict[key] = parts[index].strip()
+
+    return tax_dict
+
+
 
 # Função para parse do segmento TDT
 def parse_tdt_segment(parts):
-    required_length = 4  # Número mínimo de elementos obrigatórios no segmento TDT
-
-    if len(parts) < required_length:
-        raise ValueError("Segmento TDT incompleto")
-
-    return {
-        "TransportStageCode_01": parts[1] if len(parts) > 1 else "",
-        "ModeOfTransportCode_02": parts[2] if len(parts) > 2 else "",
-        "TransportMeans_03": parts[3] if len(parts) > 3 else "",
-        "CarrierName_04": parts[4] if len(parts) > 4 else ""
+    if not parts:
+        return {}  # Retorna um dicionário vazio se não houver partes para processar
+    
+    tdt_dict = {
+        "TransportStageCode_01": parts[1].strip() if len(parts) > 1 else "",
+        "ModeOfTransportCode_02": parts[2].strip() if len(parts) > 2 else "",
+        "TransportMeans_03": parts[3].strip() if len(parts) > 3 else "",
+        "CarrierName_04": parts[4].strip().split(":")[0] if len(parts) > 4 else ""
     }
+
+    # Adicionar mais campos conforme necessário
+    for index in range(5, len(parts)):
+        key = f"AdditionalInfo_{index - 3:02d}"  # Nomeia as chaves dinamicamente
+        tdt_dict[key] = parts[index].strip()
+
+    return tdt_dict
+
 
 # Função para parse do segmento ALC
 def parse_alc_segment(parts):
@@ -578,11 +623,7 @@ def parse_sg20_segment(parts):
 
 # Função para parse do segmento PIA
 def parse_pia_segment(parts):
-    required_length = 3  # Número mínimo de elementos obrigatórios no segmento PIA
-
-    if len(parts) < required_length:
-        raise ValueError("Segmento PIA incompleto")
-
+    if not parts: return{}
     return {
         "ProductIdentifierCodeQualifier_01": parts[1] if len(parts) > 1 else "",
         "ProductIdentifier_02": parts[2] if len(parts) > 2 else "",
@@ -743,26 +784,30 @@ def parse_sgp_segment(parts):
         "SplitGoodsInformation_01": parts[1] if len(parts) > 1 else "",
         "SplitGoodsInformation_02": parts[2] if len(parts) > 2 else ""
     }
-
+    
 # Função para parse do segmento NAD
 def parse_nad_segment(parts):
-    required_length = 2  # Número mínimo de elementos obrigatórios no segmento NAD
+    if not parts or len(parts) < 2:
+        return {"PartyQualifier": "", "PartyIdentification": ""}
 
-    if len(parts) < required_length:
-        raise ValueError("Segmento NAD incompleto")
+    party_qualifier = parts[1] if len(parts) > 1 else ""
+    party_info = parts[2].rstrip("'\r") if len(parts) > 2 else ""
+
+    if "::" in party_info:
+        party_parts = party_info.split("::")
+        party_identification = party_parts[0]
+    else:
+        party_identification = party_info
 
     return {
-        "PartyFunctionCodeQualifier_01": parts[1] if len(parts) > 1 else "",
-        "PartyIdentifier_02": parts[2] if len(parts) > 2 else ""
+        "PartyQualifier": party_qualifier,
+        "PartyIdentification": party_identification
     }
 
 # Função para parse do segmento CTA
 def parse_cta_segment(parts):
-    required_length = 2  # Número mínimo de elementos obrigatórios no segmento CTA
-
-    if len(parts) < required_length:
-        raise ValueError("Segmento CTA incompleto")
-
+    if not parts:
+     return {}  # Retorna um dicionário vazio se não houver partes para processar
     return {
         "ContactFunctionCode_01": parts[1] if len(parts) > 1 else "",
         "ContactName_02": parts[2] if len(parts) > 2 else ""
@@ -796,39 +841,20 @@ def parse_cps_segment(parts):
         "ConsignmentPackingSequenceNumber_02": parts[2] if len(parts) > 2 else ""
     }
 
-# Função para parse do segmento FTX
-def parse_ftx_segment(parts):
-    required_length = 3  # Número mínimo de elementos obrigatórios no segmento FTX
 
-    if len(parts) < required_length:
-        raise ValueError("Segmento FTX incompleto")
-
-    return {
-        "FreeTextTypeCode_01": parts[1] if len(parts) > 1 else "",
-        "FreeTextQualifier_02": parts[2] if len(parts) > 2 else "",
-        "FreeTextQualifier_03": parts[3] if len(parts) > 3 else ""
-    }
 
 # Função para parse do segmento PAC
 def parse_pac_segment(parts):
-    required_length = 2  # Número mínimo de elementos obrigatórios no segmento PAC
-
-    if len(parts) < required_length:
-        raise ValueError("Segmento PAC incompleto")
-
-    return {
-        "NumberOfPackages_01": parts[1] if len(parts) > 1 else "",
-        "NumberOfPackages_02": parts[2] if len(parts) > 2 else ""
-    }
+         if not parts: return{}
+         return {
+            "NumberOfPackages_01": parts[1] if len(parts) > 1 else "",
+            "NumberOfPackages_02": parts[2] if len(parts) > 2 else ""
+         }
 
 # Função para parse do segmento CNT
 def parse_cnt_segment(parts):
-    required_length = 2  # Número mínimo de elementos obrigatórios no segmento CNT
-
-    if len(parts) < required_length:
-        raise ValueError("Segmento CNT incompleto")
-
-    return {
+     if not parts: return{}
+     return {
         "ControlTotalTypeCode_01": parts[1] if len(parts) > 1 else "",
         "ControlTotalValue_02": parts[2] if len(parts) > 2 else ""
     }
@@ -843,21 +869,6 @@ def parse_qty_segment(parts):
     return {
         "QuantityQualifier_01": parts[1] if len(parts) > 1 else "",
         "Quantity_02": parts[2] if len(parts) > 2 else ""
-    }
-
-
-
-# Função para parse do segmento FTX
-def parse_ftx_segment(parts):
-    required_length = 3  # Número mínimo de elementos obrigatórios no segmento FTX
-
-    if len(parts) < required_length:
-        raise ValueError("Segmento FTX incompleto")
-
-    return {
-        "FreeTextQualifier_01": parts[1] if len(parts) > 1 else "",
-        "FreeText_02": parts[2] if len(parts) > 2 else "",
-        "FreeText_03": parts[3] if len(parts) > 3 else ""
     }
 
 

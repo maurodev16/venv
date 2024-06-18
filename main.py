@@ -1,27 +1,40 @@
+from typing import List
 from fastapi import FastAPI, File, UploadFile
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
-import time
-import logging
-import sys
-import os
+from pydantic import BaseModel
+from src.orders_parser import parse_orders
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Define um modelo Pydantic para a resposta JSON
+class ParsedData(BaseModel):
+    parsed_data: dict
 
-from src  import file_handler_router
-
-logging.basicConfig(level=logging.DEBUG)
-app = FastAPI(  title="Minha API EDIFACT",
+app = FastAPI(
+    title="Mauro EDI",
     description="API para processamento de arquivos EDIFACT",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc")
-app.include_router(file_handler_router)
+    redoc_url="/redoc"
+)
 
-@app.get("/")
-async def read_root():
-    return {"Hello": "World"}
+@app.post("/upload_orders_edi/")
+async def upload_orders_edi(files: List[UploadFile] = File(...)):
+    parsed_data = {}
+
+    for file in files:
+        contents = await file.read()
+        segments_list = contents.decode('utf-8').split('\n')
+        
+        parsed_segments = {}
+        for segment in segments_list:
+            segment_type = segment.split('+')[0]
+            if segment_type not in parsed_segments:
+                parsed_segments[segment_type] = []
+            parsed_segments[segment_type].append(segment.split('+'))
+
+        parsed_data[file.filename] = parse_orders(parsed_segments)
+
+    return parsed_data
+
+
 
 if __name__ == "__main__":
     import uvicorn

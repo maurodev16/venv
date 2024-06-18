@@ -2,7 +2,7 @@ import os
 
 from fastapi import logger
 
-from Api.Modules.parse_segments import *
+from src.parse_orders_edi_file import *
 
 def read_edifact_file(file_path):
    with open(file_path, 'r') as file:
