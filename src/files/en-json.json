@@ -1,0 +1,401 @@
+[
+  {
+    "UNB": {
+      "SYNTAXIDENTIFIER_1": {
+        "SyntaxIdentifier_1": "UNOB",
+        "SyntaxVersionNumber_2": "1"
+      },
+      "INTERCHANGESENDER_2": {
+        "InterchangeSenderIdentification_1": "SENDER1",
+        "IdentificationCodeQualifier_2": "14",
+        "InterchangeSenderInternalIdentification_3": "ZZUK"
+      },
+      "INTERCHANGERECIPIENT_3": {
+        "InterchangeRecipientIdentification_1": "RECEIVER1",
+        "IdentificationCodeQualifier_2": "1",
+        "InterchangeRecipientInternalIdentification_3": "ZZUK"
+      },
+      "DATEANDTIMEOFPREPARATION_4": {
+        "Date_1": "071101",
+        "Time_2": "1701"
+      },
+      "InterchangeControlReference_5": "131",
+      "ApplicationReference_7": "ORDERS",
+      "AcknowledgementRequest_9": "1",
+      "TestIndicator_11": "1"
+    },
+    "Groups": [
+      {
+        "Transactions": [
+          {
+            "UNH": {
+              "MessageReferenceNumber_01": "000000101",
+              "MessageIdentifier_02": {
+                "MessageType_01": "ORDERS",
+                "MessageVersionNumber_02": "D",
+                "MessageReleaseNumber_03": "96A",
+                "ControllingAgencyCoded_04": "UN"
+              }
+            },
+              "BGM": {
+                "DOCUMENTMESSAGENAME_01": {
+                  "Documentmessagenamecoded_01": "220"
+                },
+                "Documentmessagenumber_02": "128576",
+                "Messagefunctioncoded_03": "9"
+              },
+            "DTM": [
+              {
+                "DATETIMEPERIOD_01": {
+                  "Datetimeperiodqualifier_01": "137",
+                  "Datetimeperiod_02": "20020830",
+                  "Datetimeperiodformatqualifier_03": "102"
+                }
+              }
+            ],
+            "PAI": {
+              "PAYMENTINSTRUCTIONDETAILS_01": {
+                "Paymentmeanscoded_03": "42"
+              }
+            },
+            "FTX": [
+              {
+                "Textsubjectqualifier_01": "ZZZ",
+                "Textfunctioncoded_02": "1",
+                "TEXTREFERENCE_03": {
+                  "Freetextcoded_01": "001",
+                  "Codelistresponsibleagencycoded_03": "91"
+                }
+              }
+            ],
+            "RFFLoop": [
+              {
+                "RFF": {
+                  "REFERENCE_01": {
+                    "Referencequalifier_01": "CT",
+                    "Referencenumber_02": "652744"
+                  }
+                },
+                "DTM": [
+                  {
+                    "DATETIMEPERIOD_01": {
+                      "Datetimeperiodqualifier_01": "171",
+                      "Datetimeperiod_02": "20020825",
+                      "Datetimeperiodformatqualifier_03": "102"
+                    }
+                  }
+                ]
+              }
+            ],
+            "NADLoop": [
+              {
+                "NAD": {
+                  "Partyqualifier_01": "BY",
+                  "PARTYIDENTIFICATIONDETAILS_02": {
+                    "Partyididentification_01": "5412345000013",
+                    "Codelistresponsibleagencycoded_03": "9"
+                  }
+                },
+                "RFFLoop": [
+                  {
+                    "RFF": {
+                      "REFERENCE_01": {
+                        "Referencequalifier_01": "VA",
+                        "Referencenumber_02": "87765432"
+                      }
+                    }
+                  }
+                ],
+                "CTALoop": [
+                  {
+                    "CTA": {
+                      "Contactfunctioncoded_01": "OC",
+                      "DEPARTMENTOREMPLOYEEDETAILS_02": {
+                        "Departmentoremployee_02": "P FORGET"
+                      }
+                    },
+                    "COM": [
+                      {
+                        "COMMUNICATIONCONTACT_01": {
+                          "Communicationnumber_01": "0044715632478",
+                          "Communicationchannelqualifier_02": "TE"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "NAD": {
+                  "Partyqualifier_01": "SU",
+                  "PARTYIDENTIFICATIONDETAILS_02": {
+                    "Partyididentification_01": "4012345500004",
+                    "Codelistresponsibleagencycoded_03": "9"
+                  }
+                },
+                "RFFLoop": [
+                  {
+                    "RFF": {
+                      "REFERENCE_01": {
+                        "Referencequalifier_01": "VA",
+                        "Referencenumber_02": "56225432"
+                      }
+                    }
+                  }
+                ]
+              }
+            ],
+            "CUXLoop": [
+              {
+                "CUX": {
+                  "CURRENCYDETAILS_01": {
+                    "Currencydetailsqualifier_01": "2",
+                    "Currencycoded_02": "GBP",
+                    "Currencyqualifier_03": "9"
+                  },
+                  "CURRENCYDETAILS_02": {
+                    "Currencydetailsqualifier_01": "3",
+                    "Currencycoded_02": "EUR",
+                    "Currencyqualifier_03": "4"
+                  },
+                  "Rateofexchange_03": "1.67"
+                },
+                "DTM": [
+                  {
+                    "DATETIMEPERIOD_01": {
+                      "Datetimeperiodqualifier_01": "134",
+                      "Datetimeperiod_02": "2002080120020831",
+                      "Datetimeperiodformatqualifier_03": "718"
+                    }
+                  }
+                ]
+              }
+            ],
+            "TDTLoop": [
+              {
+                "TDT": {
+                  "Transportstagequalifier_01": "20",
+                  "MODEOFTRANSPORT_03": {
+                    "Modeoftransportcoded_01": "30"
+                  },
+                  "TRANSPORTMEANS_04": {
+                    "Typeofmeansoftransportidentification_01": "31"
+                  }
+                }
+              }
+            ],
+            "TODLoop": [
+              {
+                "TOD": {
+                  "Termsofdeliveryortransportfunctioncoded_01": "3",
+                  "TERMSOFDELIVERYORTRANSPORT_03": {
+                    "Termsofdeliveryortransportcoded_01": "CIF",
+                    "Codelistqualifier_02": "23",
+                    "Codelistresponsibleagencycoded_03": "9"
+                  }
+                },
+                "LOC": [
+                  {
+                    "Placelocationqualifier_01": "1",
+                    "LOCATIONIDENTIFICATION_02": {
+                      "Placelocationidentification_01": "BE-BRU"
+                    }
+                  }
+                ]
+              }
+            ],
+            "LINLoop": [
+              {
+                "LIN": {
+                  "Lineitemnumber_01": "1",
+                  "ITEMNUMBERIDENTIFICATION_03": {
+                    "Itemnumber_01": "4000862141404",
+                    "Itemnumbertypecoded_02": "SRS"
+                  }
+                },
+                "PIA": [
+                  {
+                    "Productidfunctionqualifier_01": "1",
+                    "ITEMNUMBERIDENTIFICATION_02": {
+                      "Itemnumber_01": "ABC1234",
+                      "Itemnumbertypecoded_02": "IN"
+                    }
+                  }
+                ],
+                "IMD": [
+                  {
+                    "Itemdescriptiontypecoded_01": "C",
+                    "ITEMDESCRIPTION_03": {
+                      "Itemdescriptionidentification_01": "TU",
+                      "Codelistresponsibleagencycoded_03": "9"
+                    }
+                  }
+                ],
+                "QTY": [
+                  {
+                    "QUANTITYDETAILS_01": {
+                      "Quantityqualifier_01": "21",
+                      "Quantity_02": "48"
+                    }
+                  }
+                ],
+                "MOA": [
+                  {
+                    "MONETARYAMOUNT_01": {
+                      "Monetaryamounttypequalifier_01": "203",
+                      "Monetaryamount_02": "699.84"
+                    }
+                  }
+                ],
+                "PRILoop": [
+                  {
+                    "PRI": {
+                      "PRICEINFORMATION_01": {
+                        "Pricequalifier_01": "AAA",
+                        "Price_02": "14.58",
+                        "Pricetypecoded_03": "CT",
+                        "Pricetypequalifier_04": "AAE",
+                        "Unitpricebasis_05": "1",
+                        "Measureunitqualifier_06": "KGM"
+                      }
+                    }
+                  }
+                ],
+                "RFFLoop": [
+                  {
+                    "RFF": {
+                      "REFERENCE_01": {
+                        "Referencequalifier_01": "PL",
+                        "Referencenumber_02": "AUG93RNG04"
+                      }
+                    },
+                    "DTM": [
+                      {
+                        "DATETIMEPERIOD_01": {
+                          "Datetimeperiodqualifier_01": "171",
+                          "Datetimeperiod_02": "20020801",
+                          "Datetimeperiodformatqualifier_03": "102"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "PACLoop": [
+                  {
+                    "PAC": {
+                      "Numberofpackages_01": "2",
+                      "PACKAGINGDETAILS_02": {
+                        "Packagingrelatedinformationcoded_02": "51"
+                      },
+                      "PACKAGETYPE_03": {
+                        "Typeofpackagesidentification_01": "CS"
+                      }
+                    },
+                    "PCILoop": [
+                      {
+                        "PCI": {
+                          "Markinginstructionscoded_01": "14"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "LOCLoop": [
+                  {
+                    "LOC": {
+                      "Placelocationqualifier_01": "7",
+                      "LOCATIONIDENTIFICATION_02": {
+                        "Placelocationidentification_01": "3312345502000",
+                        "Codelistresponsibleagencycoded_03": "9"
+                      }
+                    },
+                    "QTY": {
+                      "QUANTITYDETAILS_01": {
+                        "Quantityqualifier_01": "11",
+                        "Quantity_02": "24"
+                      }
+                    },
+                    "DTM": [
+                      {
+                        "DATETIMEPERIOD_01": {
+                          "Datetimeperiodqualifier_01": "2",
+                          "Datetimeperiod_02": "20020915",
+                          "Datetimeperiodformatqualifier_03": "102"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "LOC": {
+                      "Placelocationqualifier_01": "7",
+                      "LOCATIONIDENTIFICATION_02": {
+                        "Placelocationidentification_01": "3312345501003",
+                        "Codelistresponsibleagencycoded_03": "9"
+                      }
+                    },
+                    "QTY": {
+                      "QUANTITYDETAILS_01": {
+                        "Quantityqualifier_01": "11",
+                        "Quantity_02": "24"
+                      }
+                    },
+                    "DTM": [
+                      {
+                        "DATETIMEPERIOD_01": {
+                          "Datetimeperiodqualifier_01": "2",
+                          "Datetimeperiod_02": "20020913",
+                          "Datetimeperiodformatqualifier_03": "102"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "TAXLoop": [
+                  {
+                    "TAX": {
+                      "Dutytaxfeefunctionqualifier_01": "7",
+                      "DUTYTAXFEETYPE_02": {
+                        "Dutytaxfeetypecoded_01": "VAT"
+                      },
+                      "DUTYTAXFEEDETAIL_05": {
+                        "Dutytaxfeerate_04": "17.5"
+                      },
+                      "Dutytaxfeecategorycoded_06": "S"
+                    }
+                  }
+                ]
+              }
+            ],
+            "UNS": {
+              "Sectionidentification_01": "S"
+            },
+            "CNT": [
+              {
+                "CONTROL_01": {
+                  "Controlqualifier_01": "2",
+                  "Controlvalue_02": "1"
+                }
+              }
+            ],
+            "UNT": {
+              "NumberofSegmentsinaMessage_01": "38",
+              "MessageReferenceNumber_02": "000000101"
+            },
+            "Model": "EdiNation.Edifact.UN.D96A"
+          }
+        ]
+      }
+    ],
+    "UNZTrailers": [
+      {
+        "InterchangeControlCount_1": "1",
+        "InterchangeControlReference_2": "131"
+      }
+    ],
+    "Result": {
+      "LastIndex": 40,
+      "Details": [],
+      "Status": "success"
+    }
+  }
+]

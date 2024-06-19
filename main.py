@@ -1,7 +1,9 @@
+import os
 from typing import List
 from fastapi import FastAPI, File, UploadFile
 from pydantic import BaseModel
 from src.orders_parser import parse_orders
+from src.xml_converter import convert_edi_to_xml
 
 # Define um modelo Pydantic para a resposta JSON
 class ParsedData(BaseModel):
@@ -15,8 +17,8 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-@app.post("/upload_orders_edi/")
-async def upload_orders_edi(files: List[UploadFile] = File(...)):
+@app.post("/convert_edi_to_json/")
+async def convert_edi_to_json(files: List[UploadFile] = File(...)):
     parsed_data = {}
 
     for file in files:
@@ -30,12 +32,38 @@ async def upload_orders_edi(files: List[UploadFile] = File(...)):
                 parsed_segments[segment_type] = []
             parsed_segments[segment_type].append(segment.split('+'))
 
-        parsed_data[file.filename] = parse_orders(parsed_segments)
+        try:
+            edi_data = parse_orders(parsed_segments)  # Parse EDI para JSON
+            
+            parsed_data[file.filename] = {
+                "edi_data": edi_data
+            }
+        
+        except Exception as e:
+            return {"error": str(e)}
 
     return parsed_data
 
+@app.post("/convert_edi_to_xml/")
+async def convert_edi_to_xml_endpoint(files: List[UploadFile] = File(...)):
+    parsed_data = {}
 
+    for file in files:
+        contents = await file.read()
+        
+        try:
+            edi_data = parse_orders(contents.decode('utf-8'))  # Parse EDI para dict
+            xml_filepath = convert_edi_to_xml(edi_data, file.filename)   # Converta EDI para XML e obtenha o caminho do arquivo
+
+            parsed_data[file.filename] = {
+                "xml_filepath": xml_filepath
+            }
+        
+        except Exception as e:
+            return {"error": str(e)}
+
+    return parsed_data
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run(app, host="localhost", port=8000, reload=True)
